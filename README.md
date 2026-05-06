@@ -13,88 +13,134 @@ A full-screen interactive slideshow that consumes NASA's **Astronomy Picture of 
 
 ---
 
-## API Details
+## About the API
 
-**Provider:** NASA (National Aeronautics and Space Administration)  
-**Endpoint:** `GET https://api.nasa.gov/planetary/apod`  
-**Response format:** JSON  
+### Provider
+**NASA** (National Aeronautics and Space Administration) publicly available and free to use with a registered API key.
 
-| Parameter | Description |
-|-----------|-------------|
-| `api_key` | NASA API key (`DEMO_KEY` works for testing) |
-| `start_date` / `end_date` | Fetch a date range (returns array) |
-| `date` | Fetch a single specific date |
-| `thumbs=true` | Include video thumbnail URLs in response |
-
----
-
-## Features
-
-### Slideshow
-- Full-screen crossfade slideshow with Ken Burns (slow zoom) effect per slide
-- Auto-advances every 7 seconds, pauses on mouse hover
-- Animated progress bar at the bottom of each slide
-- Previous/Next arrow buttons + keyboard navigation (`←` `→`)
-- `F` key toggles fullscreen mode (also via button in top-right)
-
-### Date Browsing
-- **Last 30 Days** — default view, single API call
-- **On This Day** — fetches today's month/day across the last 30 years in parallel
-- **Custom Range** — pick any start/end date back to June 16, 1995 (first ever APOD)
-
-### Filmstrip
-- Horizontal thumbnail strip at the bottom showing all loaded slides
-- Click any thumbnail to jump directly to that slide
-- Active thumbnail floats up and glows; strip auto-scrolls to keep it visible
-- **Lazy loading** — only the first 11 thumbnails load on render; remaining images load in the background after 800ms so the initial view is fast
-
-### Media Handling
-- Images: full-screen background with windowed loading (only ±2 slides from current are fetched upfront)
-- MP4 videos: plays inline, muted and looped as the slide background
-- YouTube videos: displays the video's thumbnail as a static background image with an "Open Video" button
-
-### UX
-- Shimmer skeleton loader while data is fetching
-- "Read More / Read Less" to expand the NASA description
-- "View HD Image" link opens the original full-resolution photo in a new tab
-- Rate limit detection — if the NASA API returns 429, a 60-second countdown appears and auto-retries
-- Error screen with "Try Again" button on failed requests
-- Fully responsive layout (mobile-friendly)
-
----
-
-## How to Run Locally
-
-### Prerequisites
-- [Node.js](https://nodejs.org/) v18 or later
-
-### Setup
-
-```bash
-# 1. Navigate to the project folder
-cd assignment1
-
-# 2. Install dependencies
-npm install
-
-# 3. (Optional) Add your NASA API key
-cp .env.example .env
-# Edit .env — replace DEMO_KEY with your key from https://api.nasa.gov
-
-# 4. Start the development server
-npm run dev
+### Base URL
+```
+https://api.nasa.gov/planetary/apod
 ```
 
-Open `http://localhost:5173` in your browser.
+### HTTP Method
+All requests use **GET**. The API is read-only and stateless, each request is fully self-contained via URL parameters.
 
-### Get a free NASA API key
+### Authentication
+The API uses a simple **API key** passed as a query parameter:
+```
+?api_key=YOUR_KEY
+```
+A free personal key from [api.nasa.gov](https://api.nasa.gov) allows 1,000 requests/hour.
 
-1. Visit **https://api.nasa.gov**
-2. Fill in the sign-up form and submit
-3. Copy the key from the confirmation email
-4. Add it to `.env` as `VITE_NASA_API_KEY=your_key_here`
+### Response Format
+The API returns **JSON**. A range request returns a JSON array; a single-date request returns a JSON object.
 
-> Without a personal key the app uses `DEMO_KEY`, which is limited to **30 requests/hour and 50/day**.
+---
+
+## Query Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `api_key` | string | **Required.** Your NASA API key or `DEMO_KEY` |
+| `date` | string | Return the APOD for a specific date (`YYYY-MM-DD`). Defaults to today. |
+| `start_date` | string | Start of a date range (`YYYY-MM-DD`). Returns an array. |
+| `end_date` | string | End of a date range (`YYYY-MM-DD`). Used together with `start_date`. |
+| `thumbs` | boolean | If `true`, include a `thumbnail_url` field for video entries. |
+
+---
+
+## Sample API Responses
+
+### Single date (`?date=2026-05-06`)
+```json
+{
+  "date": "2026-05-06",
+  "title": "The Retrograde Dance of Saturn and Neptune",
+  "explanation": "What does it mean for Saturn and Neptune to be in retrograde?...",
+  "url": "https://apod.nasa.gov/apod/image/2605/saturn_neptune_retrograde_1024.jpg",
+  "hdurl": "https://apod.nasa.gov/apod/image/2605/saturn_neptune_retrograde.jpg",
+  "media_type": "image",
+  "service_version": "v1",
+  "copyright": "Tunç Tezel (TWAN)"
+}
+```
+
+### Video entry (`media_type: "video"`)
+```json
+{
+  "date": "2026-05-04",
+  "title": "Superplumes Inside Earth",
+  "explanation": "Why are there huge, unusual masses inside the Earth?...",
+  "url": "https://apod.nasa.gov/apod/image/2605/SuperPlumeEarth_Cottaar.mp4",
+  "media_type": "video",
+  "thumbnail_url": "",
+  "service_version": "v1"
+}
+```
+
+### Response fields used by this app
+
+| Field | Used for |
+|-------|----------|
+| `title` | Slide heading |
+| `date` | Displayed date + filmstrip year label |
+| `explanation` | Expandable description text |
+| `url` | Main slide background + filmstrip thumbnail |
+| `hdurl` | "View HD" link target (images only) |
+| `media_type` | Determines whether to render image, MP4 video, or YouTube thumbnail |
+| `copyright` | Attribution shown on slide |
+| `thumbnail_url` | Video thumbnail (often empty; app falls back to canvas frame capture) |
+
+---
+
+## How the App Fetches Data
+
+All API calls go through a single `apodFetch()` helper in `src/App.jsx` that builds the URL, attaches the API key, and throws a typed error on non-OK responses:
+
+```js
+async function apodFetch(params) {
+  const url = new URL('https://api.nasa.gov/planetary/apod')
+  url.searchParams.set('api_key', API_KEY)
+  url.searchParams.set('thumbs', 'true')
+  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v)
+  const r = await fetch(url)
+  if (!r.ok) {
+    const body = await r.json().catch(() => ({}))
+    throw Object.assign(new Error(body.msg || `API error ${r.status}`), { status: r.status })
+  }
+  return r.json()
+}
+```
+
+### Mode 1 — Last 30 Days (default)
+A **single request** with `start_date` and `end_date`:
+```
+GET /planetary/apod?api_key=...&thumbs=true&start_date=2026-04-06&end_date=2026-05-06
+```
+Returns a JSON array of 30 objects, reversed so the newest is first.
+
+### Mode 2 — On This Day
+**Up to 30 parallel requests**, one per year, all fired simultaneously with `Promise.allSettled`:
+```
+GET /planetary/apod?api_key=...&thumbs=true&date=2025-05-06
+GET /planetary/apod?api_key=...&thumbs=true&date=2024-05-06
+GET /planetary/apod?api_key=...&thumbs=true&date=2023-05-06
+...
+```
+Failures (e.g. dates before June 16 1995, the first APOD) are silently filtered out. Results are sorted newest-first.
+
+### Mode 3 — Custom Range
+Same as Mode 1 but with user-chosen dates:
+```
+GET /planetary/apod?api_key=...&thumbs=true&start_date=YYYY-MM-DD&end_date=YYYY-MM-DD
+```
+
+### Error Handling
+| HTTP Status | Behaviour |
+|-------------|-----------|
+| `429 Too Many Requests` | Shows a 60-second countdown, then auto-retries the same request |
+| Any other error | Shows an error card with a "Try Again" button |
 
 ---
 
@@ -104,6 +150,6 @@ Open `http://localhost:5173` in your browser.
 |------|---------|
 | [React](https://react.dev/) + [Vite](https://vite.dev/) | UI framework + build tool |
 | Fetch API | HTTP requests to NASA APOD |
-| CSS animations | Crossfade, Ken Burns, shimmer — no carousel library |
+| CSS animations | Crossfade, Ken Burns, shimmer — no external carousel library |
 | Google Fonts | Orbitron (headings), Inter (body) |
 | [Vercel](https://vercel.com) | Deployment |
