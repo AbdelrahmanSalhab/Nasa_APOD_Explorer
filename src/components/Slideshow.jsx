@@ -79,53 +79,9 @@ function VideoThumb({ url }) {
   )
 }
 
-// Index-window lazy loader: only images within ±WINDOW of the current slide are fetched.
-// Avoids IntersectionObserver entirely — no browser quirks with horizontal scroll containers.
-const FILM_WINDOW = 5
-
-function buildLoadedSet(n, center, winSize) {
-  const s = new Set()
-  for (let d = -winSize; d <= winSize; d++) {
-    const idx = center + d
-    if (idx >= 0 && idx < n) s.add(idx)  // no wrap-around — keeps initial count small
-  }
-  return s
-}
-
 function Filmstrip({ slides, current, onSelect }) {
   const stripRef = useRef(null)
   const activeRef = useRef(null)
-
-  const [loaded, setLoaded] = useState(
-    () => buildLoadedSet(slides.length, 0, FILM_WINDOW)
-  )
-
-  // Reset to initial window when a new slide set arrives
-  useEffect(() => {
-    setLoaded(buildLoadedSet(slides.length, 0, FILM_WINDOW))
-  }, [slides])
-
-  // Expand the loaded window as the user navigates — never shrinks
-  useEffect(() => {
-    const n = slides.length
-    setLoaded(prev => {
-      const next = new Set(prev)
-      for (let d = -FILM_WINDOW; d <= FILM_WINDOW; d++) next.add((current + d + n) % n)
-      return next.size > prev.size ? next : prev
-    })
-  }, [current, slides.length])
-
-  // After initial images have had time to start loading, preload everything else in the background
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setLoaded(prev => {
-        const next = new Set(prev)
-        for (let i = 0; i < slides.length; i++) next.add(i)
-        return next.size > prev.size ? next : prev
-      })
-    }, 800)
-    return () => clearTimeout(t)
-  }, [slides])
 
   useEffect(() => {
     activeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
@@ -144,7 +100,7 @@ function Filmstrip({ slides, current, onSelect }) {
           {s.media_type === 'video'
             ? <VideoThumb url={s.url} />
             : <div className="film-lazy-img">
-                {loaded.has(i) && <img src={s.url} alt="" />}
+                <img src={s.url} alt="" loading="lazy" decoding="async" />
               </div>
           }
           <span className="film-label">{s.date.slice(0, 4)}</span>
