@@ -123,7 +123,7 @@ export default function App() {
     return (
       <div className="loader">
         <div className="loader-ring" />
-        <span className="loader-text">Rate limit reached — retrying in {retryIn}s</span>
+        <span className="loader-text">Rate limit reached. Retrying in {retryIn}s</span>
       </div>
     )
   }

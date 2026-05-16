@@ -20,7 +20,7 @@ function youTubeThumb(url) {
   return m ? `https://img.youtube.com/vi/${m[1]}/mqdefault.jpg` : null
 }
 
-// Only handles MP4 videos — YouTube is treated as a static thumbnail (no embed)
+// Only handles MP4 videos. YouTube is treated as a static thumbnail (no embed)
 function VideoBackground({ slide, active }) {
   const videoRef = useRef(null)
 
@@ -56,7 +56,7 @@ function VideoThumb({ url }) {
         canvas.width = 160; canvas.height = 90
         canvas.getContext('2d').drawImage(video, 0, 0, 160, 90)
         setSrc(canvas.toDataURL('image/jpeg', 0.75))
-      } catch { /* CORS blocked — leave src null, show placeholder */ }
+      } catch { /* CORS blocked, leave src null and show placeholder */ }
       video.src = ''
     }
     video.addEventListener('loadeddata', () => { video.currentTime = 2 })
@@ -188,7 +188,7 @@ export default function Slideshow({ slides, mode, onFetch, today, firstApod }) {
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      {/* Backgrounds — only load images within ±2 of current to avoid fetching everything upfront */}
+      {/* Backgrounds: only load images within ±2 of current to avoid fetching everything upfront */}
       {slides.map((s, i) => {
         const n = slides.length
         const dist = Math.min(Math.abs(i - current), n - Math.abs(i - current))
