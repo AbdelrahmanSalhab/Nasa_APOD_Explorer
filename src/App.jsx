@@ -34,20 +34,32 @@ async function fetchRange(start, end) {
   return Array.isArray(data) ? [...data].reverse() : [data]
 }
 
-async function fetchOnThisDay() {
+// NASA throttles per-key concurrency, so fanning out 30 requests serializes to ~30s.
+// Batch at low concurrency and stream partial results so the user sees the first
+// slide within ~1s instead of waiting for the whole tail.
+const ON_THIS_DAY_CONCURRENCY = 5
+
+async function fetchOnThisDay(onProgress) {
   const now = new Date()
   const mm = String(now.getMonth() + 1).padStart(2, '0')
   const dd = String(now.getDate()).padStart(2, '0')
   const year = now.getFullYear()
   const dates = Array.from({ length: 30 }, (_, i) => `${year - 1 - i}-${mm}-${dd}`)
     .filter(d => d >= FIRST_APOD)
-  const results = await Promise.allSettled(dates.map(date => apodFetch({ date })))
-  const items = results
-    .filter(r => r.status === 'fulfilled')
-    .map(r => r.value)
-    .sort((a, b) => b.date.localeCompare(a.date))
-  if (!items.length) throw new Error('No APOD entries found for this date in past years.')
-  return items
+
+  const collected = []
+  for (let i = 0; i < dates.length; i += ON_THIS_DAY_CONCURRENCY) {
+    const batch = dates.slice(i, i + ON_THIS_DAY_CONCURRENCY)
+    const results = await Promise.allSettled(batch.map(date => apodFetch({ date })))
+    for (const r of results) {
+      if (r.status === 'fulfilled') collected.push(r.value)
+    }
+    if (collected.length && onProgress) {
+      onProgress([...collected].sort((a, b) => b.date.localeCompare(a.date)))
+    }
+  }
+  if (!collected.length) throw new Error('No APOD entries found for this date in past years.')
+  return [...collected].sort((a, b) => b.date.localeCompare(a.date))
 }
 
 export default function App() {
@@ -63,8 +75,13 @@ export default function App() {
     setLoading(true)
     setError(null)
     setRetryIn(null)
+    let gotFirst = false
+    const onProgress = partial => {
+      setSlides(partial)
+      if (!gotFirst) { gotFirst = true; setLoading(false) }
+    }
     try {
-      const data = await fn()
+      const data = await fn(onProgress)
       setSlides(data)
     } catch (err) {
       if (err.status === 429 || err.message?.includes('OVER_RATE_LIMIT')) {

@@ -398,6 +398,14 @@ html, body, #root {
   color: rgba(255,255,255,0.4);
 }
 
+.date-form-note {
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+  color: rgba(255,255,255,0.3);
+  margin-left: 6px;
+}
+
 .date-inputs { display: flex; flex-direction: column; gap: 8px; }
 
 .date-label {

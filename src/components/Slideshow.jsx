@@ -117,6 +117,7 @@ export default function Slideshow({ slides, mode, onFetch, today, firstApod }) {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showDatePanel, setShowDatePanel] = useState(false)
   const containerRef = useRef(null)
+  const firstDateRef = useRef(null)
 
   const goTo = useCallback(index => {
     setCurrent(index)
@@ -131,8 +132,16 @@ export default function Slideshow({ slides, mode, onFetch, today, firstApod }) {
     else document.exitFullscreen()
   }, [])
 
-  // reset on new slide set
-  useEffect(() => { setCurrent(0); setExpanded(false) }, [slides])
+  // reset only when the slide set actually changes (not when progressive batches
+  // append more years to the same on-this-day fetch)
+  useEffect(() => {
+    const firstDate = slides[0]?.date
+    if (firstDate !== firstDateRef.current) {
+      firstDateRef.current = firstDate
+      setCurrent(0)
+      setExpanded(false)
+    }
+  }, [slides])
 
   // auto-advance
   useEffect(() => {
