@@ -34,6 +34,35 @@ async function fetchRange(start, end) {
   return Array.isArray(data) ? [...data].reverse() : [data]
 }
 
+// Backend cache (/api/moon) sets a long Cache-Control, so once any user hits a
+// given date the edge CDN serves every subsequent request for free.
+async function fetchMoon(date) {
+  try {
+    const r = await fetch(`/api/moon?date=${date}`)
+    if (!r.ok) return null
+    return await r.json()
+  } catch { return null }
+}
+
+const MOON_CONCURRENCY = 6
+
+async function attachMoonPhases(slides, onUpdate) {
+  const out = slides.map(s => ({ ...s }))
+  let next = 0
+  async function worker() {
+    while (next < out.length) {
+      const idx = next++
+      const moon = await fetchMoon(out[idx].date)
+      if (moon) {
+        out[idx].moon = moon
+        onUpdate?.([...out])
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: MOON_CONCURRENCY }, worker))
+  return out
+}
+
 // NASA throttles per-key concurrency, so fanning out 30 requests serializes to ~30s.
 // Batch at low concurrency and stream partial results so the user sees the first
 // slide within ~1s instead of waiting for the whole tail.
@@ -69,6 +98,7 @@ export default function App() {
   const [retryIn, setRetryIn] = useState(null)
   const [mode, setMode] = useState('recent')
   const pendingFnRef = useRef(null)
+  const moonGenRef = useRef(0)
 
   const load = useCallback(async fn => {
     pendingFnRef.current = fn
@@ -83,6 +113,13 @@ export default function App() {
     try {
       const data = await fn(onProgress)
       setSlides(data)
+      // Fan-out moon-phase lookups in the background; each completion patches
+      // the slide in-place so emojis appear as they arrive without blocking.
+      // Generation guard discards stragglers when the user switches modes.
+      const myGen = ++moonGenRef.current
+      attachMoonPhases(data, partial => {
+        if (moonGenRef.current === myGen) setSlides(partial)
+      })
     } catch (err) {
       if (err.status === 429 || err.message?.includes('OVER_RATE_LIMIT')) {
         setRetryIn(60)

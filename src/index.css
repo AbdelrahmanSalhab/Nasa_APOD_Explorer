@@ -484,6 +484,30 @@ html, body, #root {
   color: rgba(255,255,255,0.4);
 }
 
+.slide-moon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 6px;
+  border-radius: 50px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.slide-moon-emoji {
+  font-size: 14px;
+  line-height: 1;
+  filter: drop-shadow(0 0 4px rgba(255,255,255,0.25));
+}
+
+.slide-moon-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9.5px;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.65);
+}
+
 .slide-title {
   font-family: 'Orbitron', sans-serif;
   font-size: clamp(1.3rem, 2.6vw, 2.2rem);
