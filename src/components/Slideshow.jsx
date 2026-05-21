@@ -209,11 +209,20 @@ export default function Slideshow({ slides, mode, onFetch, today, firstApod }) {
 
       <div className="overlay" />
 
-      {/* Top-left: counter + mode badge */}
+      {/* Top-left: counter, moon chip, mode badge inline */}
       <div className="top-left">
         <span className="slide-counter">
           {String(current + 1).padStart(2, '0')} / {String(slides.length).padStart(2, '0')}
         </span>
+        {slide.moon && (
+          <span
+            className="moon-chip"
+            title={`${slide.moon.label} · ${Math.round(slide.moon.illumination)}% illuminated`}
+          >
+            <span className="moon-chip-emoji" aria-hidden="true">{slide.moon.emoji}</span>
+            <span className="moon-chip-label">{slide.moon.label}</span>
+          </span>
+        )}
         {mode === 'on-this-day' && <span className="mode-badge">On This Day</span>}
       </div>
 
@@ -266,15 +275,6 @@ export default function Slideshow({ slides, mode, onFetch, today, firstApod }) {
       <div className="slide-content" key={slide.date}>
         <div className="slide-meta">
           <span className="slide-date">{formatDate(slide.date)}</span>
-          {slide.moon && (
-            <span
-              className="slide-moon"
-              title={`${slide.moon.label} · ${Math.round(slide.moon.illumination)}% illuminated`}
-            >
-              <span className="slide-moon-emoji" aria-hidden="true">{slide.moon.emoji}</span>
-              <span className="slide-moon-label">{slide.moon.label}</span>
-            </span>
-          )}
           {slide.copyright && (
             <span className="slide-copyright">© {slide.copyright.trim()}</span>
           )}

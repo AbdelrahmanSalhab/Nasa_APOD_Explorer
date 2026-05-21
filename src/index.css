@@ -229,6 +229,32 @@ html, body, #root {
   gap: 12px;
 }
 
+.moon-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.12);
+  backdrop-filter: blur(12px);
+  padding: 5px 12px 5px 10px;
+  border-radius: 50px;
+  animation: panelIn 0.3s ease forwards;
+}
+
+.moon-chip-emoji {
+  font-size: 14px;
+  line-height: 1;
+  filter: drop-shadow(0 0 4px rgba(255,255,255,0.3));
+}
+
+.moon-chip-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.7);
+}
+
 .slide-counter {
   font-family: 'Orbitron', sans-serif;
   font-size: 11px;
@@ -482,30 +508,6 @@ html, body, #root {
 .slide-copyright {
   font-size: 12px;
   color: rgba(255,255,255,0.4);
-}
-
-.slide-moon {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 10px 3px 6px;
-  border-radius: 50px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.1);
-}
-
-.slide-moon-emoji {
-  font-size: 14px;
-  line-height: 1;
-  filter: drop-shadow(0 0 4px rgba(255,255,255,0.25));
-}
-
-.slide-moon-label {
-  font-family: 'Orbitron', sans-serif;
-  font-size: 9.5px;
-  letter-spacing: 1.6px;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.65);
 }
 
 .slide-title {
