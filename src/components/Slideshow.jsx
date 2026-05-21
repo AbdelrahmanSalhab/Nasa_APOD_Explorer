@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import DateControls from './DateControls'
+import MoonDisk from './MoonDisk'
 
 const INTERVAL = 7000
 
@@ -215,11 +216,12 @@ export default function Slideshow({ slides, mode, onFetch, today, firstApod }) {
           {String(current + 1).padStart(2, '0')} / {String(slides.length).padStart(2, '0')}
         </span>
         {slide.moon && (
-          <span
-            className="moon-chip"
-            title={`${slide.moon.label} · ${Math.round(slide.moon.illumination)}% illuminated`}
-          >
-            <span className="moon-chip-emoji" aria-hidden="true">{slide.moon.emoji}</span>
+          <span className="moon-chip" title={slide.moon.label}>
+            <MoonDisk
+              phase={slide.moon.phase}
+              illumination={slide.moon.illumination}
+              size={16}
+            />
             <span className="moon-chip-label">{slide.moon.label}</span>
           </span>
         )}

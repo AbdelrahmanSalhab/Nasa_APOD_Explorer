@@ -26,6 +26,24 @@ const PHASE_LABEL = {
   WANING_CRESCENT: 'Waning Crescent',
 }
 
+// Some APIs label this third quarter; alias to our canonical name.
+const PHASE_ALIAS = { THIRD_QUARTER: 'LAST_QUARTER' }
+
+// IPGeolocation's raw moon_illumination_percentage is noisy per-date (likely
+// sampled at varying times-of-day), so two adjacent waxing days can come back
+// non-monotonic. Drive the disk from the enum only: one fixed illumination
+// per phase guarantees waxing < quarter < gibbous < full ordering.
+const PHASE_ILLUMINATION = {
+  NEW_MOON:        0,
+  WAXING_CRESCENT: 25,
+  FIRST_QUARTER:   50,
+  WAXING_GIBBOUS:  75,
+  FULL_MOON:       100,
+  WANING_GIBBOUS:  75,
+  LAST_QUARTER:    50,
+  WANING_CRESCENT: 25,
+}
+
 function send(res, status, body) {
   res.statusCode = status
   res.setHeader('Content-Type', 'application/json')
@@ -58,8 +76,12 @@ export default async function handler(req, res) {
       return send(res, r.status, { error: `astronomy api ${r.status}`, detail: detail.slice(0, 200) })
     }
     const data = await r.json()
-    const phase = data.moon_phase || 'NEW_MOON'
-    const illumination = Number(data.moon_illumination_percentage ?? 0)
+    const rawPhase = data.moon_phase
+    const phase = PHASE_ALIAS[rawPhase] || rawPhase
+    if (!PHASE_LABEL[phase]) {
+      return send(res, 502, { error: 'unrecognized moon phase from upstream', got: rawPhase })
+    }
+    const illumination = PHASE_ILLUMINATION[phase]
 
     // Moon phase for a calendar date never changes, so let Vercel's edge CDN
     // serve every subsequent user from cache for a year.
@@ -67,8 +89,8 @@ export default async function handler(req, res) {
     return send(res, 200, {
       date,
       phase,
-      label: PHASE_LABEL[phase] || phase,
-      emoji: PHASE_EMOJI[phase] || '🌑',
+      label: PHASE_LABEL[phase],
+      emoji: PHASE_EMOJI[phase],
       illumination,
     })
   } catch (err) {

@@ -36,9 +36,12 @@ async function fetchRange(start, end) {
 
 // Backend cache (/api/moon) sets a long Cache-Control, so once any user hits a
 // given date the edge CDN serves every subsequent request for free.
+// Bump MOON_API_VERSION whenever the response shape or validation changes so
+// new code does not inherit stale entries that were cached for up to a year.
+const MOON_API_VERSION = 3
 async function fetchMoon(date) {
   try {
-    const r = await fetch(`/api/moon?date=${date}`)
+    const r = await fetch(`/api/moon?date=${date}&v=${MOON_API_VERSION}`)
     if (!r.ok) return null
     return await r.json()
   } catch { return null }

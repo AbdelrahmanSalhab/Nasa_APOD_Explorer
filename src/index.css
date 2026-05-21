@@ -241,10 +241,19 @@ html, body, #root {
   animation: panelIn 0.3s ease forwards;
 }
 
-.moon-chip-emoji {
-  font-size: 14px;
-  line-height: 1;
-  filter: drop-shadow(0 0 4px rgba(255,255,255,0.3));
+.moon-disk {
+  display: block;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 4px rgba(245,236,215,0.35));
+}
+
+.moon-disk-dark { fill: #0d1220; }
+.moon-disk-lit  { fill: #f5ecd7; }
+.moon-disk-rim  {
+  fill: none;
+  stroke: rgba(125,211,252,0.35);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
 }
 
 .moon-chip-label {
