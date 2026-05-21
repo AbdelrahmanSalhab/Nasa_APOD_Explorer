@@ -84,8 +84,16 @@ function Filmstrip({ slides, current, onSelect }) {
   const stripRef = useRef(null)
   const activeRef = useRef(null)
 
+  // Always center the active thumb. scrollIntoView with inline:'center' is
+  // unreliable under rapid arrow presses (cancels itself mid-animation), so
+  // we compute scrollLeft directly. The browser clamps at the edges, which
+  // is what we want when the first/last few thumbs cannot be truly centered.
   useEffect(() => {
-    activeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+    const strip = stripRef.current
+    const active = activeRef.current
+    if (!strip || !active) return
+    const target = active.offsetLeft + active.offsetWidth / 2 - strip.clientWidth / 2
+    strip.scrollTo({ left: target, behavior: 'smooth' })
   }, [current])
 
   return (
