@@ -59,6 +59,6 @@ The function calls IPGeolocation server-side and returns `{ date, phase, label, 
 
 IPGeolocation's `/astronomy` endpoint is free up to 1000 requests/day. You sign up at ipgeolocation.io, get a key, and pass `apiKey`, `lat`, `long`, and `date` on every request. We hardcode `lat=0&long=0` because moon phase is a global property of the Sun–Earth–Moon geometry, not observer-dependent.
 
-The response includes `moon_phase` (one of 8 strings: `NEW_MOON`, `WAXING_CRESCENT`, `FIRST_QUARTER`, `WAXING_GIBBOUS`, `FULL_MOON`, `WANING_GIBBOUS`, `LAST_QUARTER`, `WANING_CRESCENT`) and a raw `moon_illumination_percentage`. We use only the enum: each phase maps to a fixed illumination (0 / 25 / 50 / 75 / 100). The raw percentage came back non-monotonic across consecutive waxing days, which is astronomically impossible, so we ignore it.
+The response includes `moon_phase` (one of 8 strings: `NEW_MOON`, `WAXING_CRESCENT`, `FIRST_QUARTER`, `WAXING_GIBBOUS`, `FULL_MOON`, `WANING_GIBBOUS`, `LAST_QUARTER`, `WANING_CRESCENT`) and a raw `moon_illumination_percentage`. We use only the enum: each phase maps to a fixed illumination (0 / 25 / 50 / 75 / 100). The raw percentage came back non-monotonic across consecutive waxing days, which suggests an API data quality issue (likely inconsistent sampling times within each calendar day), so we ignore it.
 
 Each slide renders a small SVG moon disk (`src/components/MoonDisk.jsx`) drawn at the bucketed illumination, mirrored horizontally for the four waning phases.
