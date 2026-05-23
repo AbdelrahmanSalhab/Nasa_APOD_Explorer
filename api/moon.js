@@ -1,8 +1,6 @@
 // GET /api/moon?date=YYYY-MM-DD
 // Returns the moon phase for a given date from IPGeolocation's astronomy API.
 // Aggressively edge-cached because moon phase for a given calendar date is fixed.
-// Written with plain Node req/res so the same handler runs as a Vercel function
-// and as Vite dev middleware (see vite.config.js).
 
 const PHASE_EMOJI = {
   NEW_MOON:        '🌑',
@@ -26,13 +24,8 @@ const PHASE_LABEL = {
   WANING_CRESCENT: 'Waning Crescent',
 }
 
-// Some APIs label this third quarter; alias to our canonical name.
 const PHASE_ALIAS = { THIRD_QUARTER: 'LAST_QUARTER' }
 
-// IPGeolocation's raw moon_illumination_percentage is noisy per-date (likely
-// sampled at varying times-of-day), so two adjacent waxing days can come back
-// non-monotonic. Drive the disk from the enum only: one fixed illumination
-// per phase guarantees waxing < quarter < gibbous < full ordering.
 const PHASE_ILLUMINATION = {
   NEW_MOON:        0,
   WAXING_CRESCENT: 25,

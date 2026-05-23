@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-// NASA's range endpoint becomes flaky/500s past ~3 months. Cap at 30 days,
+// Cap at 30 days,
 // matching the "Last 30 Days" path that we know is fast and reliable.
 const MAX_WINDOW_DAYS = 30
 

@@ -34,10 +34,6 @@ async function fetchRange(start, end) {
   return Array.isArray(data) ? [...data].reverse() : [data]
 }
 
-// Backend cache (/api/moon) sets a long Cache-Control, so once any user hits a
-// given date the edge CDN serves every subsequent request for free.
-// Bump MOON_API_VERSION whenever the response shape or validation changes so
-// new code does not inherit stale entries that were cached for up to a year.
 const MOON_API_VERSION = 3
 async function fetchMoon(date) {
   try {
@@ -66,7 +62,6 @@ async function attachMoonPhases(slides, onUpdate) {
   return out
 }
 
-// NASA throttles per-key concurrency, so fanning out 30 requests serializes to ~30s.
 // Batch at low concurrency and stream partial results so the user sees the first
 // slide within ~1s instead of waiting for the whole tail.
 const ON_THIS_DAY_CONCURRENCY = 5

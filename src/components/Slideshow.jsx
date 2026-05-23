@@ -17,7 +17,6 @@ function isYouTube(url) {
 
 function youTubeThumb(url) {
   const m = url.match(/(?:embed\/|v=|youtu\.be\/)([^?&/]+)/)
-  // mqdefault has no letterbox bars and no baked-in play button
   return m ? `https://img.youtube.com/vi/${m[1]}/mqdefault.jpg` : null
 }
 
