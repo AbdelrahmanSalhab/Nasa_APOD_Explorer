@@ -23,48 +23,49 @@ function youTubeThumb(url) {
 // Only handles MP4 videos. YouTube is treated as a static thumbnail (no embed)
 function VideoBackground({ slide, active }) {
   const videoRef = useRef(null)
+  const [failed, setFailed] = useState(false)
 
   useEffect(() => {
-    if (!videoRef.current) return
+    if (!videoRef.current || failed) return
     if (active) {
       videoRef.current.currentTime = 0
       videoRef.current.play().catch(() => {})
     } else {
       videoRef.current.pause()
     }
-  }, [active])
+  }, [active, failed])
+
+  if (failed) {
+    const bg = slide.thumbnail_url || null
+    return (
+      <div
+        className={`slide-bg ${active ? 'active' : ''}`}
+        style={bg ? { backgroundImage: `url(${bg})` } : {}}
+      />
+    )
+  }
 
   return (
     <div className={`slide-bg video-slide ${active ? 'active' : ''}`}>
-      <video ref={videoRef} src={slide.url} muted loop playsInline preload="none" />
+      <video
+        ref={videoRef}
+        src={slide.url}
+        muted
+        loop
+        playsInline
+        preload="none"
+        onError={() => setFailed(true)}
+      />
     </div>
   )
 }
 
-function VideoThumb({ url }) {
-  const [src, setSrc] = useState(() => isYouTube(url) ? youTubeThumb(url) : null)
-
-  useEffect(() => {
-    if (src || !url.includes('.mp4')) return
-    const video = document.createElement('video')
-    video.crossOrigin = 'anonymous'
-    video.muted = true
-    video.preload = 'metadata'
-    const onSeeked = () => {
-      try {
-        const canvas = document.createElement('canvas')
-        canvas.width = 160; canvas.height = 90
-        canvas.getContext('2d').drawImage(video, 0, 0, 160, 90)
-        setSrc(canvas.toDataURL('image/jpeg', 0.75))
-      } catch { /* CORS blocked, leave src null and show placeholder */ }
-      video.src = ''
-    }
-    video.addEventListener('loadeddata', () => { video.currentTime = 2 })
-    video.addEventListener('seeked', onSeeked)
-    video.addEventListener('error', () => { video.src = '' })
-    video.src = url
-    return () => { video.src = '' }
-  }, [url, src])
+function VideoThumb({ url, thumbUrl }) {
+  const [src] = useState(() => {
+    if (thumbUrl) return thumbUrl
+    if (isYouTube(url)) return youTubeThumb(url)
+    return null
+  })
 
   if (src) return <img src={src} alt="" loading="lazy" />
 
@@ -106,7 +107,7 @@ function Filmstrip({ slides, current, onSelect }) {
           aria-label={s.title}
         >
           {s.media_type === 'video'
-            ? <VideoThumb url={s.url} />
+            ? <VideoThumb url={s.url} thumbUrl={s.thumbnail_url} />
             : <div className="film-lazy-img">
                 <img src={s.url} alt="" loading="lazy" decoding="async" />
               </div>
