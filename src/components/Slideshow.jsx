@@ -12,7 +12,7 @@ function formatDate(dateStr) {
 }
 
 function isYouTube(url) {
-  return url.includes('youtube.com') || url.includes('youtu.be')
+  return !!url && (url.includes('youtube.com') || url.includes('youtu.be'))
 }
 
 function youTubeThumb(url) {
